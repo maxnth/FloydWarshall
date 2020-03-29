@@ -1,9 +1,10 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
 
-def floyd_warshall(graph: np.ndarray, path_reconstruction=False) -> Union[np.ndarray, Optional[(np.ndarray, np.ndarray)]]:
+def floyd_warshall(graph: np.ndarray, path_reconstruction=False) -> Union[np.ndarray,
+                                                                          Optional[Tuple[(np.ndarray, np.ndarray)]]]:
     """Finds all shortest paths in a weighted graph. Works with positive and negative weights,
     but not with negative cycles.
 
@@ -12,11 +13,20 @@ def floyd_warshall(graph: np.ndarray, path_reconstruction=False) -> Union[np.nda
 
     Args:
         graph (np.ndarray): Adjacency matrix of the graph as numpy ndarray.
-        path_reconstruction (bool): Whether to calculate and output the matrix needed for path reconstruction.
+        path_reconstruction (bool, optional): Whether to calculate and output the matrix needed for path reconstruction.
+
     Return:
         np.matrix: Adjacency matrix showing all shortest paths.
         np.matrix (optional): Adjacency matrix needed for path reconstruction.
 
+    Examples:
+        >>> graph = np.asarray([[0, np.inf, -2, np.inf], [4, 0, 3, np.inf], [np.inf, np.inf, 0, 2], [np.inf, -1, np.inf, 0]])
+        >>> shortest_paths = floyd_warshall(graph)
+        >>> print(shortest_paths)
+        [[ 0. -1. -2.  0.]
+         [ 4.  0.  2.  4.]
+         [ 5.  1.  0.  2.]
+         [ 3. -1.  1.  0.]]
     """
     assert graph.shape[0] == graph.shape[1], "Input matrix must be a square adjacency matrix"
 
@@ -54,6 +64,15 @@ def shortest_path(graph: np.ndarray, u: int, v: int) -> List[int]:
         graph (np.matrix): Adjacency matrix of the graph as numpy matrix.
         u (int): Starting node for the path.
         v (int): Target node of the path.
+
+    Return:
+        List[int]: List containing indices of the shortest path in the correct order.
+
+    Example:
+        >>> graph = np.asarray([[0, np.inf, -2, np.inf], [4, 0, 3, np.inf], [np.inf, np.inf, 0, 2], [np.inf, -1, np.inf, 0]])
+        >>> path = shortest_path(graph, 0, 3)
+        >>> print(path)
+        [0, 2, 3]
     """
     dist_matrix, path_matrix = floyd_warshall(graph, path_reconstruction=True)
 
@@ -66,6 +85,5 @@ def shortest_path(graph: np.ndarray, u: int, v: int) -> List[int]:
 
     while u != v:
         u = path_matrix[u][v]
-        print(u)
         path.append(u)
     return path
