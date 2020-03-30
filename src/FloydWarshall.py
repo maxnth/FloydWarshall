@@ -4,7 +4,7 @@ import numpy as np
 
 
 def floyd_warshall(graph: np.ndarray, path_reconstruction=False) -> Union[np.ndarray,
-                                                                          Optional[Tuple[(np.ndarray, np.ndarray)]]]:
+                                                                          Optional[Tuple[np.ndarray, np.ndarray]]]:
     """Finds all shortest paths in a weighted graph. Works with positive and negative weights,
     but not with negative cycles.
 
