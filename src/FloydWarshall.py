@@ -57,33 +57,43 @@ def floyd_warshall(graph: np.ndarray, path_reconstruction=False) -> Union[np.nda
     return dist_matrix
 
 
-def shortest_path(graph: np.ndarray, u: int, v: int) -> List[int]:
+def shortest_path(graph: np.ndarray, *waypoints) -> List[int]:
     """Reconstructs shortest path between multiple nodes
 
     Args:
         graph (np.matrix): Adjacency matrix of the graph as numpy matrix.
-        u (int): Starting node for the path.
-        v (int): Target node of the path.
+        waypoints: waypoints between which the shortest path should get calculated.
+
+    Note:
+        if not path exists between all of the waypoints not path will get calculated
 
     Return:
         List[int]: List containing indices of the shortest path in the correct order.
 
     Example:
         >>> graph = np.asarray([[0, np.inf, -2, np.inf], [4, 0, 3, np.inf], [np.inf, np.inf, 0, 2], [np.inf, -1, np.inf, 0]])
-        >>> path = shortest_path(graph, 0, 3)
+        >>> path = shortest_path(graph, 0, 1, 3)
         >>> print(path)
-        [0, 2, 3]
+        [0, 2, 3, 1, 0, 2, 3]
     """
     dist_matrix, path_matrix = floyd_warshall(graph, path_reconstruction=True)
 
-    try:
-        path_matrix[u][v]
-    except IndexError:
-        return []
+    assert len(waypoints) > 0, "No waypoints supplied."
+    assert all(isinstance(waypoint, int) for waypoint in waypoints), "False datatype for at least one waypoint " \
+                                                                     "(int needed)"
 
-    path = [u]
+    for i in range(len(waypoints)-1):
+        try:
+            path_matrix[waypoints[i]][waypoints[i+1]]
+        except IndexError:
+            return []
 
-    while u != v:
-        u = path_matrix[u][v]
-        path.append(u)
+    path = [waypoints[0]]
+
+    for i in range(len(waypoints)-1):
+        u = waypoints[i]
+        v = waypoints[i+1]
+        while u != v:
+            u = path_matrix[u][v]
+            path.append(u)
     return path
