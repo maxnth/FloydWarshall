@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -57,24 +57,27 @@ def floyd_warshall(graph: np.ndarray, path_reconstruction=False) -> Union[np.nda
     return dist_matrix
 
 
-def shortest_path(graph: np.ndarray, *waypoints) -> List[int]:
+def shortest_path(graph: np.ndarray, *waypoints, pretty=False) -> Union[str, None, Tuple[List[int], Dict[Tuple[int, int], int]]]:
     """Reconstructs shortest path between multiple nodes
 
     Args:
         graph (np.matrix): Adjacency matrix of the graph as numpy matrix.
         waypoints: waypoints between which the shortest path should get calculated.
+        pretty (bool): Whether to pretty print path or return raw path
 
     Note:
         if not path exists between all of the waypoints not path will get calculated
 
     Return:
-        List[int]: List containing indices of the shortest path in the correct order.
+        str: Formatted text output showing input, shortest path and cost of the shortest path
+        Tuple[List[int], Dict[Tuple[int, int], int]]: Tuple list with indices of shortest path and dictionary which
+        contains the cost for every step of the shortest path
 
     Example:
         >>> graph = np.asarray([[0, np.inf, -2, np.inf], [4, 0, 3, np.inf], [np.inf, np.inf, 0, 2], [np.inf, -1, np.inf, 0]])
         >>> path = shortest_path(graph, 0, 1, 3)
         >>> print(path)
-        [0, 2, 3, 1, 0, 2, 3]
+        ([0, 2, 3, 1, 0, 2, 3], {(0, 2): -2.0, (2, 3): 2.0, (3, 1): -1.0, (1, 0): 4.0})
     """
     dist_matrix, path_matrix = floyd_warshall(graph, path_reconstruction=True)
 
@@ -82,18 +85,35 @@ def shortest_path(graph: np.ndarray, *waypoints) -> List[int]:
     assert all(isinstance(waypoint, int) for waypoint in waypoints), "False datatype for at least one waypoint " \
                                                                      "(int needed)"
 
-    for i in range(len(waypoints)-1):
+    for i in range(len(waypoints) - 1):
         try:
-            path_matrix[waypoints[i]][waypoints[i+1]]
+            path_matrix[waypoints[i]][waypoints[i + 1]]
         except IndexError:
-            return []
+            return "IndexError: Certain waypoint nodes are not part of the input graph"
 
-    path = [waypoints[0]]
+    def calculate_shortest_path():
+        path = [waypoints[0]]
 
-    for i in range(len(waypoints)-1):
-        u = waypoints[i]
-        v = waypoints[i+1]
-        while u != v:
-            u = path_matrix[u][v]
-            path.append(u)
-    return path
+        for i in range(len(waypoints) - 1):
+            u = waypoints[i]
+            v = waypoints[i + 1]
+            while u != v:
+                u = path_matrix[u][v]
+                path.append(u)
+
+        return path
+
+    def pprint_path():
+        _waypoints = " ⟶ ".join([str(node) for node in waypoints])
+        _shortest_path = " ⟶ ".join([str(node) for node in path])
+        _cost = '\n'.join(
+            [f"{node[0]} ⟶ {node[1]} ({dist_matrix[node[0]][node[1]]})" for node in list(zip(path, path[1:]))])
+        return f"== Waypoints ==\n{_waypoints}\n\n==Shortest Path ==\n{_shortest_path}\n\n== Cost ==\n{_cost}"
+
+    def calc_path_costs():
+        return {(node[0], node[1]): dist_matrix[node[0]][node[1]] for node in list(zip(path, path[1:]))}
+
+    path = calculate_shortest_path()
+    if pretty:
+        return print(f"{pprint_path()}\nTotal Cost: {sum(calc_path_costs().values())}")
+    return path, calc_path_costs()
